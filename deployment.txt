@@ -1,0 +1,145 @@
+# 1. Dockerfile
+FROM python:3.9-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Ollama
+RUN curl https://ollama.ai/install.sh | sh
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p data/cache data/indexes
+
+# Expose port
+EXPOSE 7860
+
+# Start command
+CMD ["python", "-m", "src.code_rag.web.app"]
+
+# 2. docker-compose.yml
+version: '3.8'
+
+services:
+  rag:
+    build: .
+    ports:
+      - "7860:7860"
+    volumes:
+      - ./data:/app/data
+      - ${CODE_DIR}:/app/code_dir
+    environment:
+      - MODEL_NAME=${MODEL_NAME:-mistral-openorca}
+      - CODE_DIRECTORY=/app/code_dir
+      - CACHE_DIR=/app/data/cache
+      - INDEX_DIR=/app/data/indexes
+      - DEBUG=${DEBUG:-False}
+    restart: unless-stopped
+
+# 3. .dockerignore
+venv/
+data/
+*.pyc
+__pycache__/
+.git/
+.env
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 4. Hugging Face Space (app.py)
+from src.code_rag.web.app import create_interface
+
+# Create and launch the interface
+demo = create_interface()
+demo.launch()
+
+# 5. requirements-spaces.txt
+llama-index==0.9.11
+gradio==4.19.2
+python-dotenv==1.0.0
+transformers>=4.36.0
+pydantic==2.5.2
+chromadb==0.4.22
+torch>=2.1.0
+accelerate>=0.27.0
+
+# 6. deployment/nginx.conf
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://localhost:7860;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# 7. scripts/deploy.sh
+#!/bin/bash
+
+# Build and deploy script
+set -e
+
+# Load environment variables
+source .env
+
+# Build Docker image
+echo "Building Docker image..."
+docker-compose build
+
+# Stop existing containers
+echo "Stopping existing containers..."
+docker-compose down
+
+# Start new containers
+echo "Starting new containers..."
+docker-compose up -d
+
+echo "Deployment complete!"
+
+# 8. scripts/setup_server.sh
+#!/bin/bash
+
+# Server setup script
+set -e
+
+# Update system
+apt-get update && apt-get upgrade -y
+
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+
+# Install Docker Compose
+curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+# Install Nginx
+apt-get install -y nginx
+
+# Setup SSL with Certbot
+apt-get install -y certbot python3-certbot-nginx
+
+# Copy Nginx configuration
+cp deployment/nginx.conf /etc/nginx/sites-available/code-rag
+ln -s /etc/nginx/sites-available/code-rag /etc/nginx/sites-enabled/
+
+# Restart Nginx
+systemctl restart nginx

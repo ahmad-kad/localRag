@@ -1,0 +1,36 @@
+# Core ML dependencies
+numpy==1.24.3  # Stable version for PyTorch and FAISS compatibility
+torch==2.2.0   # Latest stable version for Apple Silicon support
+faiss-cpu==1.7.4  # Stable version for vector similarity search
+
+# LlamaIndex ecosystem
+# Using newer versions that are compatible with pydantic >= 2.8.0
+llama-index-core==0.12.8
+llama-index-llms-ollama==0.5.0
+llama-index-readers-file==0.4.1
+
+# Data validation and settings
+pydantic>=2.8.0  # Updated to match llama-index-core requirement
+pydantic-settings>=2.1.0
+
+# Embedding and ML
+sentence-transformers==2.5.1
+
+# Document processing
+python-magic==0.4.27
+python-magic-bin==0.4.14
+pygments==2.17.2
+
+# Web interface
+gradio==4.19.2
+fastapi==0.109.1  # Updated to work with newer pydantic
+
+# Utility packages
+python-dotenv==1.0.0
+typing-extensions==4.9.0
+loguru==0.7.2
+
+# Development tools
+pytest==7.4.3
+black==23.9.1
+isort==5.12.0

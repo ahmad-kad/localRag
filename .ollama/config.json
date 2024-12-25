@@ -1,0 +1,10 @@
+{
+  "gpu_layers": 35, 
+  "compute_unit": "auto",  
+  "numa": false, 
+  "ram_size": "18GB",
+  "threading": {
+    "batch_size": 8,
+    "num_predict": 2048
+  }
+}
