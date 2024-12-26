@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from typing import List, Set
-import magic
+import mimetypes
 from pygments.lexers import guess_lexer
 
 logger = logging.getLogger(__name__)
@@ -14,10 +14,10 @@ def setup_logging(log_level: str = "INFO"):
     )
 
 def detect_file_type(file_path: Path) -> str:
-    """Detect file type using libmagic."""
+    """Detect file type using mimetypes."""
     try:
-        mime = magic.Magic(mime=True)
-        return mime.from_file(str(file_path))
+        mime_type, _ = mimetypes.guess_type(str(file_path))
+        return mime_type or "application/octet-stream"
     except Exception as e:
         logger.warning(f"Could not detect file type for {file_path}: {e}")
         return "application/octet-stream"

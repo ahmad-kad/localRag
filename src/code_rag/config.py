@@ -25,8 +25,16 @@ class Settings(BaseSettings):
     CACHE_DIR: Path = Path("data/cache")
     INDEX_DIR: Path = Path("data/indexes")
     FAISS_INDEX_PATH: Path = Path("data/indexes/faiss.index")
+
+    # Web interface settings
+    API_PORT: int = 8000
+    DEBUG: bool = False
+    LOG_LEVEL: str = "INFO"
     
     model_config = SettingsConfigDict(
         env_file=".env",
         extra='ignore'
     )
+
+# Create and export a settings instance
+settings = Settings()
